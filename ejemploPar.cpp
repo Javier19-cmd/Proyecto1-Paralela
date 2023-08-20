@@ -1,76 +1,55 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
-#include <SDL2/SDL.h>
 #include <thread>
 #include <vector>
+#include <SDL2/SDL.h>
 
-const int SCREEN_WIDTH = 600;
-const int SCREEN_HEIGHT = 600;
+const int SCREEN_WIDTH = 700;
+const int SCREEN_HEIGHT = 700;
 const int MIN_FPS = 60;
 
 class Element {
 public:
-    Element(int x, int y, int size, int speed) : x(x), y(y), size(size), speed(speed) {
+    Element(int x, int y, int size, int speedX, int speedY)
+        : x(x), y(y), size(size), speedX(speedX), speedY(speedY) {
         color.r = rand() % 256;
         color.g = rand() % 256;
         color.b = rand() % 256;
     }
 
     void update() {
-        x += speed;
-        if (x > SCREEN_WIDTH) {
-            x = -size;
-            y = rand() % SCREEN_HEIGHT;
+        x += speedX;
+        y += speedY;
+
+        if (x <= 0 || x + size >= SCREEN_WIDTH) {
+            speedX = -speedX; // Cambio de dirección en X al colisionar con las paredes horizontales
         }
+
+        if (y <= 0 || y + size >= SCREEN_HEIGHT) {
+            speedY = -speedY; // Cambio de dirección en Y al colisionar con las paredes verticales
+        }
+
+        // Limitar la velocidad en las direcciones X e Y
+        speedX = std::min(std::max(speedX, -5), 50);
+        speedY = std::min(std::max(speedY, -5), 50);
     }
 
     void render(SDL_Renderer* renderer) {
         SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
-        SDL_Rect rect = { x, y, size, size };
+        SDL_Rect rect = {x, y, size, size};
         SDL_RenderFillRect(renderer, &rect);
     }
 
 private:
-    int x, y, size, speed;
+    int x, y, size, speedX, speedY;
     SDL_Color color;
 };
 
-void renderLoop(SDL_Renderer* renderer, std::vector<Element*>& elements) {
-    bool quit = false;
-    SDL_Event e;
-    Uint32 startTime, frameTime;
-    int frames = 0;
-
-    while (!quit) {
-        startTime = SDL_GetTicks();
-
-        while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_QUIT) {
-                quit = true;
-            }
-        }
-
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderClear(renderer);
-
-        for (auto element : elements) {
-            element->update();
-            element->render(renderer);
-        }
-
-        SDL_RenderPresent(renderer);
-
-        frameTime = SDL_GetTicks() - startTime;
-        if (frameTime < 1000 / MIN_FPS) {
-            SDL_Delay(1000 / MIN_FPS - frameTime);
-        }
-
-        frames++;
-        if (frames % MIN_FPS == 0) {
-            std::cout << "FPS: " << frames << std::endl;
-            frames = 0;
-        }
+void updateThread(Element* element) {
+    while (true) {
+        element->update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(16)); // Aproximadamente 60 FPS
     }
 }
 
@@ -95,62 +74,83 @@ int main(int argc, char* argv[]) {
     int numElements = (argc > 1) ? atoi(argv[1]) : 50;
     srand(time(nullptr));
 
-    std::vector<Element*> elements;
+    Element* elements[numElements];
     for (int i = 0; i < numElements; ++i) {
-        int x = rand() % SCREEN_WIDTH;
-        int y = rand() % SCREEN_HEIGHT;
+        int x = rand() % (SCREEN_WIDTH - 30);
+        int y = rand() % (SCREEN_HEIGHT - 30);
         int size = rand() % 20 + 10;
-        int speed = rand() % 5 + 1;
-        elements.push_back(new Element(x, y, size, speed));
+        int speedX = rand() % 5 + 1;
+        int speedY = rand() % 5 + 1;
+        elements[i] = new Element(x, y, size, speedX, speedY);
     }
-
-    // Medición del tiempo de ejecución secuencial
-    auto startSequential = std::chrono::high_resolution_clock::now();
-
-    for (auto element : elements) {
-        element->update();
-        element->render(renderer);
-    }
-
-    auto endSequential = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> sequentialDuration = endSequential - startSequential;
-
-    // Creación y medición del tiempo de ejecución en paralelo
-    std::thread renderThread(renderLoop, renderer, std::ref(elements));
-
-    auto startParallel = std::chrono::high_resolution_clock::now();
 
     bool quit = false;
     SDL_Event e;
+    Uint32 startTime, frameTime;
+    int frames = 0;
+
+    // Medición del tiempo de ejecución secuencial
+    auto startSequential = SDL_GetTicks();
+
+    std::vector<std::thread> updateThreads;
+    for (Element* element : elements) {
+        updateThreads.emplace_back(updateThread, element);
+    }
 
     while (!quit) {
+        startTime = SDL_GetTicks();
+
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
                 quit = true;
             }
         }
+
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+
+        for (Element* element : elements) {
+            element->render(renderer);
+        }
+
+        SDL_RenderPresent(renderer);
+
+        frameTime = SDL_GetTicks() - startTime;
+        if (frameTime < 1000 / MIN_FPS) {
+            SDL_Delay(1000 / MIN_FPS - frameTime);
+        }
+
+        frames++;
+        if (frames % MIN_FPS == 0) {
+            std::cout << "FPS: " << frames << std::endl;
+            frames = 0;
+        }
     }
 
-    auto endParallel = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> parallelDuration = endParallel - startParallel;
-
-    renderThread.join();
+    auto endSequential = SDL_GetTicks();
+    double sequentialDuration = static_cast<double>(endSequential - startSequential) / 1000.0;
 
     // Cálculo del speedup y la eficiencia
-    double speedup = sequentialDuration.count() / parallelDuration.count();
+    auto startParallel = SDL_GetTicks();
+    for (std::thread& thread : updateThreads) {
+        thread.join();
+    }
+    auto endParallel = SDL_GetTicks();
+    double parallelDuration = static_cast<double>(endParallel - startParallel) / 1000.0;
+
+    double speedup = sequentialDuration / parallelDuration;
     double efficiency = speedup / std::thread::hardware_concurrency();
 
-    std::cout << "Speedup: " << speedup << std::endl;
-    std::cout << "Eficiencia: " << efficiency << std::endl;
-
-    // Liberación de memoria
-    for (auto element : elements) {
+    for (Element* element : elements) {
         delete element;
     }
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
+
+    std::cout << "Speedup: " << speedup << std::endl;
+    std::cout << "Eficiencia: " << efficiency << std::endl;
 
     return 0;
 }
