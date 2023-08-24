@@ -1,6 +1,6 @@
 /**
  * @file ejemploSec.cpp
- * @author Javier Valle, Mario de Leon
+ * @author Javier Valle, Mario de León
  * @ID 20159, 19019.
  * @brief 
  * @version 0.1
