@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <SDL2/SDL.h>
+#include <cmath>
 
 const int SCREEN_WIDTH = 700;
 const int SCREEN_HEIGHT = 700;
@@ -9,8 +10,8 @@ const int MIN_FPS = 60;
 
 class Element {
 public:
-    Element(int x, int y, int size, int speedX, int speedY)
-        : x(x), y(y), size(size), speedX(speedX), speedY(speedY) {
+    Element(int x, int y, int radius, int speedX, int speedY)
+        : x(x), y(y), radius(radius), speedX(speedX), speedY(speedY) {
         color.r = rand() % 256;
         color.g = rand() % 256;
         color.b = rand() % 256;
@@ -20,27 +21,35 @@ public:
         x += speedX;
         y += speedY;
 
-        if (x <= 0 || x + size >= SCREEN_WIDTH) {
+        if (x - radius <= 0 || x + radius >= SCREEN_WIDTH) {
             speedX = -speedX; // Cambio de dirección en X al colisionar con las paredes horizontales
         }
 
-        if (y <= 0 || y + size >= SCREEN_HEIGHT) {
+        if (y - radius <= 0 || y + radius >= SCREEN_HEIGHT) {
             speedY = -speedY; // Cambio de dirección en Y al colisionar con las paredes verticales
         }
 
         // Limitar la velocidad en las direcciones X e Y
-        speedX = std::min(std::max(speedX, -5), 50);
-        speedY = std::min(std::max(speedY, -5), 50);
+        speedX = std::min(std::max(speedX, -5), 5);
+        speedY = std::min(std::max(speedY, -5), 5);
     }
 
     void render(SDL_Renderer* renderer) {
         SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
-        SDL_Rect rect = {x, y, size, size};
-        SDL_RenderFillRect(renderer, &rect);
+        
+        for (int i = x - radius; i <= x + radius; ++i) {
+            for (int j = y - radius; j <= y + radius; ++j) {
+                int dx = i - x;
+                int dy = j - y;
+                if (dx * dx + dy * dy <= radius * radius) {
+                    SDL_RenderDrawPoint(renderer, i, j);
+                }
+            }
+        }
     }
 
 private:
-    int x, y, size, speedX, speedY;
+    int x, y, radius, speedX, speedY;
     SDL_Color color;
 };
 
@@ -67,21 +76,18 @@ int main(int argc, char* argv[]) {
 
     Element* elements[numElements];
     for (int i = 0; i < numElements; ++i) {
-        int x = rand() % (SCREEN_WIDTH - 30); // Limitar la posición inicial para evitar que la figura se desborde inicialmente
-        int y = rand() % (SCREEN_HEIGHT - 30); // Limitar la posición inicial para evitar que la figura se desborde inicialmente
-        int size = rand() % 20 + 10;
+        int x = rand() % (SCREEN_WIDTH - 30) + 30;
+        int y = rand() % (SCREEN_HEIGHT - 30) + 30;
+        int radius = rand() % 10 + 5;
         int speedX = rand() % 5 + 1;
         int speedY = rand() % 5 + 1;
-        elements[i] = new Element(x, y, size, speedX, speedY);
+        elements[i] = new Element(x, y, radius, speedX, speedY);
     }
 
     bool quit = false;
     SDL_Event e;
-    Uint32 startTime, frameTime;
+    Uint32 startTime, frameTime, prevTime = 0;
     int frames = 0;
-
-    // Medición del tiempo de ejecución secuencial
-    auto startSequential = SDL_GetTicks();
 
     while (!quit) {
         startTime = SDL_GetTicks();
@@ -102,20 +108,19 @@ int main(int argc, char* argv[]) {
 
         SDL_RenderPresent(renderer);
 
+        frames++;
+        Uint32 currentTime = SDL_GetTicks();
+        if (currentTime - prevTime >= 1000) {
+            std::cout << "FPS: " << frames << std::endl;
+            frames = 0;
+            prevTime = currentTime;
+        }
+
         frameTime = SDL_GetTicks() - startTime;
         if (frameTime < 1000 / MIN_FPS) {
             SDL_Delay(1000 / MIN_FPS - frameTime);
         }
-
-        frames++;
-        if (frames % MIN_FPS == 0) {
-            std::cout << "FPS: " << frames << std::endl;
-            frames = 0;
-        }
     }
-
-    auto endSequential = SDL_GetTicks();
-    double sequentialDuration = static_cast<double>(endSequential - startSequential) / 1000.0;
 
     for (int i = 0; i < numElements; ++i) {
         delete elements[i];
@@ -124,8 +129,6 @@ int main(int argc, char* argv[]) {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-
-    std::cout << "Tiempo secuencial: " << sequentialDuration << " segundos" << std::endl;
 
     return 0;
 }
