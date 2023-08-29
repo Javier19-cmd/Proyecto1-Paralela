@@ -43,3 +43,11 @@ El método main realiza lo siguiente:
     - En esta parte se calcula el tiempo transcurrido en el ciclo y se agrega un poco de demora para mantener bien la velocidad de los FPS dentro de los límites posibles.
 11. Liberación de memoria y cierre del SDL:
     - Aquí, en esta parte final, lo que se hace es que, luego de que se sale del ciclo principal, se liberan los elementos creados y se cierra el renderizador y la ventana.
+
+## screensaver_paralelo
+
+Este código al igual que el screensaver_secuecial tiene una clase Element y un método main.
+
+La clase Element posee las mismas caracterísitcas y lógica que el código secuencial.
+
+El método main contiene la misma lógica que el código secuencial, sin embargo, se hicieron algunas modificaciones para optimizar el código. Lo anterior se logró hacer de la siguiente manera: 
