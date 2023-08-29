@@ -2,6 +2,10 @@
 
 ### Descripción general del código secuencial.
 
+Este proyecto consta de dos códigos, un código secuencial (screensaver_secuencial) y un código paralelo (screensaver_parelelo).
+
+## screensaver_secuencial
+
 El presente código secuencial consta de una clase Element, la cual se encarga de hacer posible la representación de los elementos en la pantalla que el usuario verá para el screensaver.
 Los elementos que representan esta clase son principalmente círculos, los cuales tienen una posición, un radio y velocidades en los ejes x e y. Además, cada elemento tiene un color, 
 el cual es asignado de manera aleatoria al momento de su creación. 
@@ -13,4 +17,29 @@ El último método que tiene esta clase es un método llamado render el cual se 
 color que tiene asignado. Lo anterior lo hacer en base a su posición y radio ya asignados anteriormente.
 
 También es importante mencionar que el código cuenta con una función main, la cual se encarga de poder inicializar el código y de trabajar toda la lógica que el código requiera para poder 
-funcionar. 
+funcionar.
+
+El método main realiza lo siguiente:
+
+1. SDL_Init(SDL_INIT_VIDEO): Inicializa la librería SDL2 para poder trabajar la interfaz gráfica.
+2. SDL_CreateWindow: Crea una ventana con el nombre "Screensaver" y con las dimensiones de la pantalla definidas en el código (SCREEN_WIDTH y SCREEN_HEIGHT).
+3. SDL_CreateRenderer: Crea un renderizador para poder dibujar los elementos en la ventana creada anteriormente.
+4. Ciclo de configuración: 
+    - En este ciclo lo que se hace es solicitar la cantidad de elementos que el usuario desea ver en la pantalla. 
+    - Se revisa que el usuario haya ingresado datos válidos, o sea que haya ingresado un número entero positivo y que no haya ingresado letras o que no se haya ingresado nada.
+5. Creación de elementos: 
+    -  Para poder inicializar correctamente los elementos, se usa la función srand(time(nullptr)) la cual ayuda a inicializar la semilla de generación de números pseudoaleatorios.
+6. Ciclo principal del Screensaver: 
+    - Este ciclo lo que permite es poder mantener la ventana abierta y el ciclo principal ejecutándose hasta que el usuario desee cerrar la misma.
+    - Aquí también se manejan eventos para poder detectar la acción del usuario de cerrar la ventana.
+7. Actualización y renderización de los elementos: 
+    - En esta parte del código se borra el renderizador y se llena con un color negro para poder limpiar la vetana en cada ciclo.
+    - Por otro lado, también se actualiza y se renderizan los elementos en el arreglo elements.
+8. Presentación de la ventana: 
+    - Aquí se enseña el renderizado de todos los elementos del programa en la ventana.
+9. Cálculo e impresión de FPS: 
+    - En este trozo del código lo que se hace es calcular el número de FPS en cada momento de la ejecución de la ventana y se imprime el resultado en la consola.
+10. Limitación de velocidad de actualización: 
+    - En esta parte se calcula el tiempo transcurrido en el ciclo y se agrega un poco de demora para mantener bien la velocidad de los FPS dentro de los límites posibles.
+11. Liberación de memoria y cierre del SDL:
+    - Aquí, en esta parte final, lo que se hace es que, luego de que se sale del ciclo principal, se liberan los elementos creados y se cierra el renderizador y la ventana.
