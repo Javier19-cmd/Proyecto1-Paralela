@@ -1,4 +1,4 @@
-# Proyecto 1 Computación Paralela y Distribuída
+# Proyecto 1 de Computación Paralela y Distribuída: Realizar un screensaver secuencial y paralelo.
 
 ### Descripción general del código secuencial.
 
