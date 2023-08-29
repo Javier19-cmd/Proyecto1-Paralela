@@ -2,4 +2,4 @@
 
 ### Descripción general del código secuencial.
 
-#### s
+El presente código secuencial 
