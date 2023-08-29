@@ -1,6 +1,6 @@
 /**
  * @file ejemploParalelo.cpp
- * @brief Ejemplo de un screensaver usando SDL2.
+ * @brief Ejemplo de un screensaver paralelo usando SDL2 y OpenMP.
  * @version 0.1
  * @date 2023-08-24
  */
@@ -10,6 +10,7 @@
 #include <ctime>
 #include <SDL2/SDL.h>
 #include <cmath>
+#include <omp.h> // Incluir la librería OpenMP
 
 // Constantes para dimensiones de la ventana.
 const int SCREEN_WIDTH = 700;
@@ -120,6 +121,7 @@ int main(int argc, char* argv[]) {
 
     // Creando un arreglo que tiene punteros a elementos.
     Element* elements[numElements];
+    #pragma omp parallel for // Crear elementos en paralelo usando OpenMP
     for (int i = 0; i < numElements; ++i) {
 
         // Generando propiedades aleatorias para cada elemento.
@@ -131,10 +133,16 @@ int main(int argc, char* argv[]) {
         elements[i] = new Element(x, y, radius, speedX, speedY);
     }
 
+    
+
     bool quit = false;
     SDL_Event e;
     Uint32 startTime, frameTime, prevTime = 0;
     int frames = 0;
+
+
+        // Medición del tiempo de ejecución secuencial
+    double startSec = omp_get_wtime(); // Inicio de la medición
 
     while (!quit) {
         startTime = SDL_GetTicks();
@@ -173,6 +181,74 @@ int main(int argc, char* argv[]) {
             SDL_Delay(1000 / MIN_FPS - frameTime);
         }
     }
+
+    double endSec = omp_get_wtime(); // Fin de la medición secuencial
+
+    //double startSec = omp_get_wtime(); // Fin de la medición secuencial
+
+    double startPar = omp_get_wtime(); // Inicio de la medición
+
+    while (!quit) {
+        startTime = SDL_GetTicks();
+
+        while (SDL_PollEvent(&e)) {
+            if (e.type == SDL_QUIT) {
+                quit = true;
+            }
+        }
+
+        // Limpieza del renderizador.
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+
+        // Actualización y renderización de los elementos en paralelo.
+        #pragma omp parallel for
+        for (int i = 0; i < numElements; ++i) {
+            #pragma omp critical
+            {
+                elements[i]->update();
+                elements[i]->render(renderer);
+            }
+        }
+
+        // Presentación del elemento renderizado en la ventana.
+        SDL_RenderPresent(renderer);
+
+        // Cálculo e impresión de los FPS de la pantalla.
+        #pragma omp master
+        {
+            frames++;
+            Uint32 currentTime = SDL_GetTicks();
+            if (currentTime - prevTime >= 1000) {
+                std::cout << "FPS: " << frames << std::endl;
+                frames = 0;
+                prevTime = currentTime;
+            }
+        }
+
+        // Limitación de la velocidad de actualización.
+        frameTime = SDL_GetTicks() - startTime;
+        if (frameTime < 1000 / MIN_FPS) {
+            SDL_Delay(1000 / MIN_FPS - frameTime);
+        }
+    }
+
+    double endPar = omp_get_wtime(); // Fin de la medición paralela
+
+    //double endSec = omp_get_wtime(); // Fin de la medición secuencial
+
+
+    // Cálculo de speedup y eficiencia
+    double T_sec = endSec - startSec;
+    double T_par = endPar - startPar;
+    int P = omp_get_max_threads();
+    double speedup = T_sec / T_par;
+    double efficiency = speedup / P;
+
+    std::cout << "Tiempo secuencial: " << T_sec << " segundos" << std::endl;
+    std::cout << "Tiempo paralelo: " << T_par << " segundos" << std::endl;
+    std::cout << "Speedup: " << speedup << std::endl;
+    std::cout << "Eficiencia: " << efficiency << std::endl;
 
     // Liberación de la memoria y cierre de SDL.
     for (int i = 0; i < numElements; ++i) {
