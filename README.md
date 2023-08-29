@@ -51,3 +51,9 @@ Este código al igual que el screensaver_secuecial tiene una clase Element y un 
 La clase Element posee las mismas caracterísitcas y lógica que el código secuencial.
 
 El método main contiene la misma lógica que el código secuencial, sin embargo, se hicieron algunas modificaciones para optimizar el código. Lo anterior se logró hacer de la siguiente manera: 
+
+- Se generó una sección paralela, para que así se pueda generar de manera más rápida y eficiente la creación de los elementos a renderizar en la pantalla.
+
+- La parte de actualización se generó de manera paralela al igual que el renderizado de los objetos. Para realizar esto, se usaron las instrucciones de update y de render, con el objetivo de agilizar las operaciones en pantalla.
+
+- Por último, se generó una sección en la cual se calcula el speedup y la eficiencia del programa. Lo anterior se hace luego de que la ejecución termina por completo.
