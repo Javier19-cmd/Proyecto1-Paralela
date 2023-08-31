@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
 
     while (true) {
         // Solicitar el número de elementos al usuario
-        std::cout << "Ingresa el número de elementos (entre " << MIN_NUM_ELEMENTS << " y " << MAX_NUM_ELEMENTS << "): ";
+        std::cout << "Ingresa el número de elementos (mayor a 0): ";
         std::string input;
         std::getline(std::cin, input);
 
@@ -109,8 +109,8 @@ int main(int argc, char* argv[]) {
             char* endptr;
             numElements = strtol(input.c_str(), &endptr, 10);
 
-            if (*endptr != '\0' || numElements < MIN_NUM_ELEMENTS || numElements > MAX_NUM_ELEMENTS) {
-                std::cerr << "Error: Ingresa un número válido de elementos (entre " << MIN_NUM_ELEMENTS << " y " << MAX_NUM_ELEMENTS << ")." << std::endl;
+            if (*endptr != '\0' || numElements < MIN_NUM_ELEMENTS) {
+                std::cerr << "Error: Ingresa un número válido de elementos (mayor a 0)." << std::endl;
             } else {
                 break; // Salir del bucle si se ingresó un valor válido
             }
