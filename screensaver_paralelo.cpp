@@ -5,6 +5,13 @@
  * @date 2023-08-24
  */
 
+
+ /*
+    Referencias: 
+    Paralelismo en pipeline execution con OpenMP: https://stackoverflow.com/questions/44169351/employing-parallelism-in-pipelined-execution
+
+  */
+
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
@@ -133,15 +140,12 @@ int main(int argc, char* argv[]) {
         elements[i] = new Element(x, y, radius, speedX, speedY);
     }
 
-    
-
     bool quit = false;
     SDL_Event e;
     Uint32 startTime, frameTime, prevTime = 0;
     int frames = 0;
 
-
-        // Medición del tiempo de ejecución secuencial
+    // Medición del tiempo de ejecución secuencial
     double startSec = omp_get_wtime(); // Inicio de la medición
 
     while (!quit) {
@@ -167,12 +171,16 @@ int main(int argc, char* argv[]) {
         SDL_RenderPresent(renderer);
 
         // Cálculo e impresión de los FPS de la pantalla.
-        frames++;
-        Uint32 currentTime = SDL_GetTicks();
-        if (currentTime - prevTime >= 1000) {
-            std::cout << "FPS: " << frames << std::endl;
-            frames = 0;
-            prevTime = currentTime;
+        // Protegiendo esta parte para evitar la escritura y lectura concurrente.
+        #pragma omp critical (update_frames)
+        {
+            frames++;
+            Uint32 currentTime = SDL_GetTicks();
+            if (currentTime - prevTime >= 1000) {
+                std::cout << "FPS: " << frames << std::endl;
+                frames = 0;
+                prevTime = currentTime;
+            }
         }
 
         // Limitación de la velocidad de actualización.
@@ -183,8 +191,6 @@ int main(int argc, char* argv[]) {
     }
 
     double endSec = omp_get_wtime(); // Fin de la medición secuencial
-
-    //double startSec = omp_get_wtime(); // Fin de la medición secuencial
 
     double startPar = omp_get_wtime(); // Inicio de la medición
 
@@ -204,11 +210,8 @@ int main(int argc, char* argv[]) {
         // Actualización y renderización de los elementos en paralelo.
         #pragma omp parallel for
         for (int i = 0; i < numElements; ++i) {
-            #pragma omp critical
-            {
-                elements[i]->update();
-                elements[i]->render(renderer);
-            }
+            elements[i]->update();
+            elements[i]->render(renderer);
         }
 
         // Presentación del elemento renderizado en la ventana.
@@ -235,9 +238,6 @@ int main(int argc, char* argv[]) {
 
     double endPar = omp_get_wtime(); // Fin de la medición paralela
 
-    //double endSec = omp_get_wtime(); // Fin de la medición secuencial
-
-
     // Cálculo de speedup y eficiencia
     double T_sec = endSec - startSec;
     double T_par = endPar - startPar;
@@ -251,8 +251,13 @@ int main(int argc, char* argv[]) {
     std::cout << "Eficiencia: " << efficiency << std::endl;
 
     // Liberación de la memoria y cierre de SDL.
-    for (int i = 0; i < numElements; ++i) {
-        delete elements[i];
+    #pragma omp parallel
+    {
+        #pragma omp task
+        for (int i = 0; i < numElements; ++i) {
+            delete elements[i];
+        }
+        #pragma omp taskwait
     }
 
     SDL_DestroyRenderer(renderer);
