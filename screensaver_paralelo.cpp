@@ -78,7 +78,8 @@ public:
 private:
     int x, y, radius, speedX, speedY;
     SDL_Color color;
-};
+} __attribute__((aligned(64))); // Alineación de memoria de 64 bytes
+
 
 int main(int argc, char* argv[]) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -206,6 +207,9 @@ int main(int argc, char* argv[]) {
         // Limpieza del renderizador.
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
+
+
+        // Optimizando la memoria compartida para poder hacer la actualización y renderización en paralelo.
 
         #pragma omp parallel for shared(elements) // Compartir el arreglo de elementos entre los hilos
         for (int i = 0; i < numElements; ++i) {
