@@ -207,11 +207,14 @@ int main(int argc, char* argv[]) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
-        // Actualización y renderización de los elementos en paralelo.
-        #pragma omp parallel for
+        #pragma omp parallel for shared(elements) // Compartir el arreglo de elementos entre los hilos
         for (int i = 0; i < numElements; ++i) {
-            elements[i]->update();
-            elements[i]->render(renderer);
+            elements[i]->update(); // Cada hilo trabaja en su propio elemento
+        }
+
+        #pragma omp parallel for shared(elements) // Compartir el arreglo de elementos entre los hilos
+        for (int i = 0; i < numElements; ++i) {
+            elements[i]->render(renderer); // Cada hilo trabaja en su propio elemento
         }
 
         // Presentación del elemento renderizado en la ventana.
@@ -251,13 +254,11 @@ int main(int argc, char* argv[]) {
     std::cout << "Eficiencia: " << efficiency << std::endl;
 
     // Liberación de la memoria y cierre de SDL.
-    #pragma omp parallel
+    #pragma omp task
     {
-        #pragma omp task
         for (int i = 0; i < numElements; ++i) {
             delete elements[i];
         }
-        #pragma omp taskwait
     }
 
     SDL_DestroyRenderer(renderer);
