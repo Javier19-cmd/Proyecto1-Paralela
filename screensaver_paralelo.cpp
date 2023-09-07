@@ -9,6 +9,7 @@
  /*
     Referencias: 
     Paralelismo en pipeline execution con OpenMP: https://stackoverflow.com/questions/44169351/employing-parallelism-in-pipelined-execution
+    Uso de taskyield para permitir que otras tareas trabajen en el equipo: https://www.openmp.org/spec-html/5.0/openmpsu49.html
 
   */
 
@@ -214,11 +215,13 @@ int main(int argc, char* argv[]) {
         #pragma omp parallel for shared(elements) // Compartir el arreglo de elementos entre los hilos
         for (int i = 0; i < numElements; ++i) {
             elements[i]->update(); // Cada hilo trabaja en su propio elemento
+            #pragma omp taskyield // Permitiendo que otras tareas trabajen en el equipo.
         }
 
         #pragma omp parallel for shared(elements) // Compartir el arreglo de elementos entre los hilos
         for (int i = 0; i < numElements; ++i) {
             elements[i]->render(renderer); // Cada hilo trabaja en su propio elemento
+            #pragma omp taskyield // Permitiendo que otras tareas trabajen en el equipo.
         }
 
         // Presentación del elemento renderizado en la ventana.
