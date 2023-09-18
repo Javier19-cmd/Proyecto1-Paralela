@@ -11,6 +11,12 @@
     Paralelismo en pipeline execution con OpenMP: https://stackoverflow.com/questions/44169351/employing-parallelism-in-pipelined-execution
     Uso de taskyield para permitir que otras tareas trabajen en el equipo: https://www.openmp.org/spec-html/5.0/openmpsu49.html
 
+    Puntos extra:
+    1. En el private de la clase Element.
+    2. Optimizaciòn de memoria compartida en el main. (Son los #pragma omp parallel for shared(elements))
+    3. Optimizaciòn de liberaciòn de memoria en el main. (Es el #pragma omp task)
+    4. Usando mecanismos de pragma no vistos en clase (el #pragma omp taskyield de los #pragma omp parallel for shared(elements))
+
   */
 
 #include <iostream>
@@ -18,7 +24,7 @@
 #include <ctime>
 #include <SDL2/SDL.h>
 #include <cmath>
-#include <omp.h> // Incluir la librería OpenMP
+#include <omp.h>
 
 // Constantes para dimensiones de la ventana.
 const int SCREEN_WIDTH = 700;
@@ -102,7 +108,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    int numElements = 50; // Número predeterminado de elementos
+    int numElements = 0; // Número predeterminado de elementos
 
     while (true) {
         // Solicitar el número de elementos al usuario
@@ -212,13 +218,13 @@ int main(int argc, char* argv[]) {
 
         // Optimizando la memoria compartida para poder hacer la actualización y renderización en paralelo.
 
-        #pragma omp parallel for shared(elements) // Compartir el arreglo de elementos entre los hilos
+        #pragma omp parallel for shared(elements) // Compartiendo el arreglo de elementos entre los hilos
         for (int i = 0; i < numElements; ++i) {
             elements[i]->update(); // Cada hilo trabaja en su propio elemento
             #pragma omp taskyield // Permitiendo que otras tareas trabajen en el equipo.
         }
 
-        #pragma omp parallel for shared(elements) // Compartir el arreglo de elementos entre los hilos
+        #pragma omp parallel for shared(elements) // Compartiendo el arreglo de elementos entre los hilos
         for (int i = 0; i < numElements; ++i) {
             elements[i]->render(renderer); // Cada hilo trabaja en su propio elemento
             #pragma omp taskyield // Permitiendo que otras tareas trabajen en el equipo.

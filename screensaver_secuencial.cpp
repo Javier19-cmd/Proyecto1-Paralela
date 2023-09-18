@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    int numElements = 50; // Número predeterminado de elementos
+    int numElements = 0; // Número predeterminado de elementos
 
     while (true) {
         // Solicitar el número de elementos al usuario
