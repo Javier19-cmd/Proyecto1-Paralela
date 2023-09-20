@@ -8,18 +8,18 @@ Este proyecto consta de dos códigos, un código secuencial (screensaver_secuenc
 
 ### Resumen del código
 
-Este codigo es una implementacion de un screensaver secuencial en C++ utlilizando la libreria de SDL2 para la representacion grafica de los elementos. Este screensaver 
-enseña los elementos graficos (en este caso circulos) en la pantalla con cierta velocidad y los mueve con rebote en las paredes. Ademas, el codigo tambien mide los 
+Este código es una implementación de un screensaver secuencial en C++ utlilizando la librería de SDL2 para la representación gráfica de los elementos. Este screensaver 
+enseña los elementos gráficos (en este caso círculos) en la pantalla con cierta velocidad y los mueve con rebote en las paredes. Además, el código también mide los 
 cuadros por segundo (FPS) en tiempo real.
 
-### Caracteristicas
+### Características
 
-- Elementos graficos (circulos) generados con propiedades aleatorias (color y velocidad).
-- Movimiento de los elementos (o sea los circulos) con rebote en las paredes.
-- Medicion de los cuadros por segundo (FPS) en tiempo real.
+- Elementos gráficos (círculos) generados con propiedades aleatorias (color y velocidad).
+- Movimiento de los elementos (o sea los círculos) con rebote en las paredes.
+- Medición de los cuadros por segundo (FPS) en tiempo real.
 
 ### Requisitos
-- SDL2 para la representacion grafica de los elementos.
+- SDL2 para la representación gráfica de los elementos.
 
 ### Uso
 1. Compilar el programa utilizando un compilador de C++ (g++ o clang++). Para la ejecución se debe utilizar el siguiente comando en la terminal:
@@ -31,7 +31,7 @@ cuadros por segundo (FPS) en tiempo real.
 5. Se puede cerrar el programa haciendo clic en la X de la ventana o haciendo Ctrl + C en la terminal.
 
 # Notas
-- Este programa usa SDL2 para la representacion grafica, lo que permite crear una ventana y dibujar elementos en la misma. 
+- Este programa usa SDL2 para la representacion gráfica, lo que permite crear una ventana y dibujar elementos en la misma. 
 - Los elementos se generan con propiedades aleatorias, como color y velocidad. Lo anterior produce un screensaver diferente cada vez que se ejecuta el programa.
 - El programa mide los cuadros por segundo (FPS) en tiempo real y lo imprime en la consola.
 - El programa se ejecuta en bucle hasta que el usuario cierra la ventana.
@@ -78,20 +78,20 @@ El método main realiza lo siguiente:
 
 ## screensaver_paralelo
 
-En este codigo se presentan las mismas caracteristicas que el screensaver_secuencial implementado en C++, pero en este caso se uso tambien la libreria de OpenMP para poder paralelizar el codigo y,
-a su vez, optimizarlo en rendimiento en cara a los FPS. El presente codigo presenta igualmente la funcionalidad de crear y renderizar los elementos en la pantalla.
+En este código se presentan las mismas características que el screensaver_secuencial implementado en C++, pero en este caso se uso también la libreria de OpenMP para poder paralelizar el código y,
+a su vez, optimizarlo en rendimiento en cara a los FPS. El presente código presenta igualmente la funcionalidad de crear y renderizar los elementos en la pantalla.
 
-### Caracteristicas
+### Características
 
-- Generacion de circulos con propiedades aleatorias. (En este caso velocidades y colores aleatorios).
+- Generación de círculos con propiedades aleatorias. (En este caso velocidades y colores aleatorios).
 - Movimiento de los elementos (o sea los circulos) con rebote en las paredes.
-- Medicion de los cuadros por segundo (FPS) en tiempo real.
-- Ejecucion en modo secuencial y en modo paralelo para la comparacion del rendimiento en FPS.
+- Medición de los cuadros por segundo (FPS) en tiempo real.
+- Ejecución en modo secuencial y en modo paralelo para la comparacion del rendimiento en FPS.
 
 ### Requisitos
 
-- SDL2 para la representacion grafica de los elementos.
-- OpenMP para la paralelizacion del codigo.
+- SDL2 para la representación gráfica de los elementos.
+- OpenMP para la paralelizacion del código.
 
 ### Uso
 
@@ -109,6 +109,6 @@ a su vez, optimizarlo en rendimiento en cara a los FPS. El presente codigo prese
 ### Puntos extra
 
 1. En la clase 'Element', la alineaciòn de memoria se configurò en 64 bytes.
-2. Se usò la optimizaciòn del uso de memoria compartida en el 'main' con directivas OpenMP (#pragma omp parallel for shared(elements))
-3. Liberaciòn de memoria optimizada usando #pragma omp task.
+2. Se usó la optimizaciòn del uso de memoria compartida en el 'main' con directivas OpenMP (#pragma omp parallel for shared(elements))
+3. Liberación de memoria optimizada usando #pragma omp task.
 4. Se usaron mecanismos de pragma no vistos en clse, como #pragma omp taskyield en conjunto con #pragma omp parallel for shared(elements).
