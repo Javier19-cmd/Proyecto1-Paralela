@@ -6,6 +6,38 @@ Este proyecto consta de dos códigos, un código secuencial (screensaver_secuenc
 
 ## screensaver_secuencial
 
+### Resumen del código
+
+Este codigo es una implementacion de un screensaver secuencial en C++ utlilizando la libreria de SDL2 para la representacion grafica de los elementos. Este screensaver 
+enseña los elementos graficos (en este caso circulos) en la pantalla con cierta velocidad y los mueve con rebote en las paredes. Ademas, el codigo tambien mide los 
+cuadros por segundo (FPS) en tiempo real.
+
+### Caracteristicas
+
+- Elementos graficos (circulos) generados con propiedades aleatorias (color y velocidad).
+- Movimiento de los elementos (o sea los circulos) con rebote en las paredes.
+- Medicion de los cuadros por segundo (FPS) en tiempo real.
+
+### Requisitos
+- SDL2 para la representacion grafica de los elementos.
+
+### Uso
+1. Compilar el programa utilizando un compilador de C++ (g++ o clang++). Para la ejecución se debe utilizar el siguiente comando en la terminal:
+    g++ -o screensaver_secuencial screensaver_secuencial.cpp `sdl2-config --cflags --libs`
+2. Ejecutar el programa con el siguiente comando:
+    ./screensaver_secuencial
+3. Ingresar la cantidad de elementos que se desean ver en la pantalla. (Esta debe ser mayor que 0).
+4. Observar el screensaver en la pantalla.
+5. Se puede cerrar el programa haciendo clic en la X de la ventana o haciendo Ctrl + C en la terminal.
+
+# Notas
+- Este programa usa SDL2 para la representacion grafica, lo que permite crear una ventana y dibujar elementos en la misma. 
+- Los elementos se generan con propiedades aleatorias, como color y velocidad. Lo anterior produce un screensaver diferente cada vez que se ejecuta el programa.
+- El programa mide los cuadros por segundo (FPS) en tiempo real y lo imprime en la consola.
+- El programa se ejecuta en bucle hasta que el usuario cierra la ventana.
+
+# Descripción general del código paralelo.
+
 El presente código secuencial consta de una clase Element, la cual se encarga de hacer posible la representación de los elementos en la pantalla que el usuario verá para el screensaver.
 Los elementos que representan esta clase son principalmente círculos, los cuales tienen una posición, un radio y velocidades en los ejes x e y. Además, cada elemento tiene un color, 
 el cual es asignado de manera aleatoria al momento de su creación. 
@@ -46,14 +78,37 @@ El método main realiza lo siguiente:
 
 ## screensaver_paralelo
 
-Este código al igual que el screensaver_secuecial tiene una clase Element y un método main.
+En este codigo se presentan las mismas caracteristicas que el screensaver_secuencial implementado en C++, pero en este caso se uso tambien la libreria de OpenMP para poder paralelizar el codigo y,
+a su vez, optimizarlo en rendimiento en cara a los FPS. El presente codigo presenta igualmente la funcionalidad de crear y renderizar los elementos en la pantalla.
 
-La clase Element posee las mismas caracterísitcas y lógica que el código secuencial.
+### Caracteristicas
 
-El método main contiene la misma lógica que el código secuencial, sin embargo, se hicieron algunas modificaciones para optimizar el código. Lo anterior se logró hacer de la siguiente manera: 
+- Generacion de circulos con propiedades aleatorias. (En este caso velocidades y colores aleatorios).
+- Movimiento de los elementos (o sea los circulos) con rebote en las paredes.
+- Medicion de los cuadros por segundo (FPS) en tiempo real.
+- Ejecucion en modo secuencial y en modo paralelo para la comparacion del rendimiento en FPS.
 
-1. Se generó una sección paralela, para que así se pueda generar de manera más rápida y eficiente la creación de los elementos a renderizar en la pantalla.
+### Requisitos
 
-2. La parte de actualización se generó de manera paralela al igual que el renderizado de los objetos. Para realizar esto, se usaron las instrucciones de update y de render, con el objetivo de agilizar las operaciones en pantalla.
+- SDL2 para la representacion grafica de los elementos.
+- OpenMP para la paralelizacion del codigo.
 
-3. Por último, se generó una sección en la cual se calcula el speedup y la eficiencia del programa. Lo anterior se hace luego de que la ejecución termina por completo.
+### Uso
+
+1. Compilar el programa utilizando un compilador de C++ (g++ o clang++) que admita OpenMP. Para la ejecución se debe utilizar el siguiente comando:
+    g++ -o screensaver_paralelo screensaver_paralelo.cpp `sdl2-config --cflags --libs` -fopenmp
+2. Ejecutar el programa con el siguiente comando:
+    ./screensaver_paralelo
+3. Ingresar la cantidad de elementos que se desean ver en la pantalla. (Esta debe ser mayor que 0).
+4. Se puede cerrar el programa haciendo clic en la X de la ventana o haciendo Ctrl + C en la terminal.
+
+### Referencias
+- Paralelismo en pipeline execution con OpenMP: https://stackoverflow.com/questions/44169351/employing-parallelism-in-pipelined-execution
+- Uso de taskyield para permitir que otras tareas trabajen en el equipo: https://www.openmp.org/spec-html/5.0/openmpsu49.html
+
+### Puntos extra
+
+1. En la clase 'Element', la alineaciòn de memoria se configurò en 64 bytes.
+2. Se usò la optimizaciòn del uso de memoria compartida en el 'main' con directivas OpenMP (#pragma omp parallel for shared(elements))
+3. Liberaciòn de memoria optimizada usando #pragma omp task.
+4. Se usaron mecanismos de pragma no vistos en clse, como #pragma omp taskyield en conjunto con #pragma omp parallel for shared(elements).

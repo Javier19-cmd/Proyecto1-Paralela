@@ -1,6 +1,6 @@
 /**
- * @file ejemploParalelo.cpp
- * @brief Ejemplo de un screensaver paralelo usando SDL2 y OpenMP.
+ * @file screensaver_secuencial.cpp
+ * @brief Ejemplo de un screensaver secuencial usando SDL2.
  * @version 0.1
  * @date 2023-08-24
  */
