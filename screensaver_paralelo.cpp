@@ -19,6 +19,7 @@
 
   */
 
+#include <cstdio>
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
@@ -94,14 +95,12 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Creando la ventana del screensaver.
     SDL_Window* window = SDL_CreateWindow("Screensaver", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (!window) {
         std::cerr << "Window creation failed: " << SDL_GetError() << std::endl;
         return 1;
     }
 
-    // Creando el renderizador.
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (!renderer) {
         std::cerr << "Renderer creation failed: " << SDL_GetError() << std::endl;
@@ -136,10 +135,8 @@ int main(int argc, char* argv[]) {
 
     // Creando un arreglo que tiene punteros a elementos.
     Element* elements[numElements];
-    #pragma omp parallel for // Crear elementos en paralelo usando OpenMP
+    #pragma omp parallel for num_threads(6) // Crear elementos en paralelo usando OpenMP
     for (int i = 0; i < numElements; ++i) {
-
-        // Generando propiedades aleatorias para cada elemento.
         int x = rand() % (SCREEN_WIDTH - 30) + 30;
         int y = rand() % (SCREEN_HEIGHT - 30) + 30;
         int radius = rand() % 10 + 5;
@@ -153,8 +150,9 @@ int main(int argc, char* argv[]) {
     Uint32 startTime, frameTime, prevTime = 0;
     int frames = 0;
 
-    // Medición del tiempo de ejecución secuencial
-    double startSec = omp_get_wtime(); // Inicio de la medición
+
+    // Medición del tiempo secuencial
+    double startSec = omp_get_wtime();
 
     while (!quit) {
         startTime = SDL_GetTicks();
@@ -165,33 +163,24 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // Limpieza del renderizador.
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
-        // Actualización y renderización de los elementos.
         for (int i = 0; i < numElements; ++i) {
             elements[i]->update();
             elements[i]->render(renderer);
         }
 
-        // Presentación del elemento renderizado en la ventana.
         SDL_RenderPresent(renderer);
 
-        // Cálculo e impresión de los FPS de la pantalla.
-        // Protegiendo esta parte para evitar la escritura y lectura concurrente.
-        #pragma omp critical (update_frames)
-        {
-            frames++;
-            Uint32 currentTime = SDL_GetTicks();
-            if (currentTime - prevTime >= 1000) {
-                std::cout << "FPS: " << frames << std::endl;
-                frames = 0;
-                prevTime = currentTime;
-            }
+        frames++;
+        Uint32 currentTime = SDL_GetTicks();
+        if (currentTime - prevTime >= 1000) {
+            std::cout << "FPS (Parallel): " << frames << std::endl;
+            frames = 0;
+            prevTime = currentTime;
         }
 
-        // Limitación de la velocidad de actualización.
         frameTime = SDL_GetTicks() - startTime;
         if (frameTime < 1000 / MIN_FPS) {
             SDL_Delay(1000 / MIN_FPS - frameTime);
@@ -200,7 +189,14 @@ int main(int argc, char* argv[]) {
 
     double endSec = omp_get_wtime(); // Fin de la medición secuencial
 
-    double startPar = omp_get_wtime(); // Inicio de la medición
+    //double startPar = omp_get_wtime(); // Inicio de la medición
+
+    // Reiniciar variables para la medición en paralelo
+    quit = false;
+    frames = 0;
+    prevTime = 0;
+
+    double startPar = omp_get_wtime();
 
     while (!quit) {
         startTime = SDL_GetTicks();
@@ -215,46 +211,34 @@ int main(int argc, char* argv[]) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
+        //printf("Max threads: %d\n", omp_get_max_threads());
 
-        // Optimizando la memoria compartida para poder hacer la actualización y renderización en paralelo.
-
-        #pragma omp parallel for shared(elements) // Compartiendo el arreglo de elementos entre los hilos
+        #pragma omp parallel for num_threads(6)
         for (int i = 0; i < numElements; ++i) {
-            elements[i]->update(); // Cada hilo trabaja en su propio elemento
-            #pragma omp taskyield // Permitiendo que otras tareas trabajen en el equipo.
+            elements[i]->update();
         }
 
-        #pragma omp parallel for shared(elements) // Compartiendo el arreglo de elementos entre los hilos
         for (int i = 0; i < numElements; ++i) {
-            elements[i]->render(renderer); // Cada hilo trabaja en su propio elemento
-            #pragma omp taskyield // Permitiendo que otras tareas trabajen en el equipo.
+            elements[i]->render(renderer);
         }
-
         // Presentación del elemento renderizado en la ventana.
         SDL_RenderPresent(renderer);
 
-        // Cálculo e impresión de los FPS de la pantalla.
-        #pragma omp master
-        {
-            frames++;
-            Uint32 currentTime = SDL_GetTicks();
-            if (currentTime - prevTime >= 1000) {
-                std::cout << "FPS: " << frames << std::endl;
-                frames = 0;
-                prevTime = currentTime;
-            }
+        frames++;
+        Uint32 currentTime = SDL_GetTicks();
+        if (currentTime - prevTime >= 1000) {
+            std::cout << "FPS (Parallel): " << frames << std::endl;
+            frames = 0;
+            prevTime = currentTime;
         }
 
-        // Limitación de la velocidad de actualización.
         frameTime = SDL_GetTicks() - startTime;
         if (frameTime < 1000 / MIN_FPS) {
             SDL_Delay(1000 / MIN_FPS - frameTime);
         }
     }
+    double endPar = omp_get_wtime();
 
-    double endPar = omp_get_wtime(); // Fin de la medición paralela
-
-    // Cálculo de speedup y eficiencia
     double T_sec = endSec - startSec;
     double T_par = endPar - startPar;
     int P = omp_get_max_threads();
@@ -266,12 +250,8 @@ int main(int argc, char* argv[]) {
     std::cout << "Speedup: " << speedup << std::endl;
     std::cout << "Eficiencia: " << efficiency << std::endl;
 
-    // Liberación de la memoria y cierre de SDL.
-    #pragma omp task
-    {
-        for (int i = 0; i < numElements; ++i) {
-            delete elements[i];
-        }
+    for (int i = 0; i < numElements; ++i) {
+        delete elements[i];
     }
 
     SDL_DestroyRenderer(renderer);
